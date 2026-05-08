@@ -3,7 +3,10 @@ name: Flutter Build & Release
 on:
   push:
     branches: [ main ]
-  workflow_dispatch: # 支持手动触发构建
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 permissions:
   contents: write
@@ -13,9 +16,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.0' # 尽量和项目 pubspec.yaml 里的 Flutter 版本一致
+          flutter-version: '3.27.0' # 更稳定的LTS版本，兼容性更好
+          channel: 'stable'
       - run: flutter pub get
       - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
@@ -24,12 +33,13 @@ jobs:
           path: build/app/outputs/apk/release/*.apk
 
   build-windows:
-    runs-on: windows-latest
+    runs-on: windows-2022 # 用稳定的Windows 2022 runner，避免2025预览版问题
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.0'
+          flutter-version: '3.27.0'
+          channel: 'stable'
       - run: flutter pub get
       - run: flutter config --enable-windows-desktop
       - run: flutter build windows --release
